@@ -1,0 +1,179 @@
+<!--
+Currency Formatter
+Dynamically evaluates input to a text field
+and formats the output as a valid currency value
+with commas and a decimal point where appropriate
+Copyright 2015 Todd Brochu
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Currency Field</title>
+    <script type="text/javascript">
+        var acceptableChars = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+        var output = "";
+        var firstCommaPosition = 7;
+        var nextCommaPosition = 11;
+        
+        /**
+         * Dynamically formats the input to a text field
+         * as a currency value, with commas
+         * and a decimal point where appropriate
+         * @param none
+         * @return none
+         */
+        function format() {
+            //use most recent keystroke only if a valid number
+            var lastElement = String(document.getElementById('dollarID').value).slice(-1);
+            if(isValid(lastElement, acceptableChars) == true) {
+                output += lastElement;
+            }
+            
+            else {
+                cleanField();
+            }
+            
+            //insert decimal point
+            if(output.length == 2) {
+                output = "." + output; 
+                refreshOutput(); 
+            }
+            
+            //help the decimal point travel rightward as a number's length increases
+            if(output.length > 3) {
+                shiftDecimalPoint();
+                refreshOutput();
+            }
+            
+            //insert first comma
+            if(output.length == firstCommaPosition) {
+                insertComma();
+                refreshOutput();
+            }
+            
+            //help the commas travel rightward as a number's length increases
+            if (output.length > 8) {
+                shiftCommas();
+                refreshOutput();
+            }
+            
+            //insert subsequent commas
+            if(output.length == nextCommaPosition) {
+                insertComma();
+                nextCommaPosition += 4;
+                refreshOutput();
+            }   
+        }
+        
+        /**
+         * Verifies whether or not
+         * the last input char is an integer 
+         * @param {Char} value
+         * @param {Array of chars} array
+         * @return {Boolean}
+         */
+        function isValid(value, array) {
+            return array.indexOf(value) > -1;
+        }
+        
+        /**
+         * Helps the decimal point travel rightward
+         * as the length of the input increases
+         * @param none
+         * @return none
+         */
+        function shiftDecimalPoint() {
+            output = output.split('');
+            var decPosition = output.indexOf('.');
+            var swapChar = output[decPosition + 1];
+            output[decPosition] = swapChar;
+            output[decPosition + 1] = '.';
+            output = output.join('');  
+        }
+        
+        /**
+         * Inserts one comma
+         * @param none
+         * @return none
+         */
+        function insertComma() {
+            var first = output.charAt(0);
+            var last =  output.substr(1, output.length - 1);
+            output = first + "," + last; 
+        }
+        
+        /**
+         * Helps the commas travel rightward
+         * as the length of the input increases
+         * @param none
+         * @return none
+         */
+        function shiftCommas() {
+            //record the positions of all of the commas
+            var indices = [];
+            for(var i = 0; i < output.length; i++) {
+                if (output[i] == ",") indices.push(i);
+            }
+            
+            output = output.split('');
+            for (var i = 0; i < indices.length; i++) {
+                var commaPosition = indices[i];
+                var swapChar = output[commaPosition + 1];
+                output[commaPosition] = swapChar;
+                output[commaPosition + 1] = ',';
+            }
+            output = output.join('');
+        }
+        
+        /**
+         * Refreshes the input field
+         * @param none
+         * @return none
+         */
+        function refreshOutput() {
+            document.getElementById('dollarID').value = output;
+        }
+        
+        /**
+         * Erases the input field
+         * @param none 
+         * @return none
+         */
+        function cleanField() {
+            output = "";
+            firstCommaPosition = 7;
+            nextCommaPosition = 11;
+            refreshOutput();
+        }
+        
+        /**
+         * Disallows backspace input
+         * @param {windows.event} ev 
+         * @return none
+         */
+        function checkBackspace(ev) {
+            if (event.which == 8 || event.keyCode == 8) {
+                cleanField();
+            }
+        }
+    </script>
+    <!--
+    <script type="text/javascript" src="body.js"></script>
+    <script type="text/javascript" src="employers.js"></script>
+    <link rel="stylesheet" href="body.scss"/>
+    -->
+  </head>
+  <body>
+    <div style="font-size: 40px;">
+        <strong>Enter a dollar amount:</strong><br>
+        <form action="" title="Enter a dollar amount, numbers only" >
+            <strong>$</strong>
+            <input type="text" id="dollarID" value="" contenteditable="false" autofocus
+                   oninput="format()" onpaste="return false;" onkeydown="checkBackspace(event)"  
+                   style="height:40px; font-size: 36px; background-color: #EBFFFF;">
+            
+        </form>
+    </div>
+  </body>
+</html>
