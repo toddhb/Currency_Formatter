@@ -15,6 +15,31 @@ Copyright 2015 Todd Brochu
         var output = "";
         var firstCommaPosition = 7;
         var nextCommaPosition = 11;
+        var lastElement = "";
+        
+        /**
+         * Evaluates the latest keystroke
+         * against the list of acceptable inputs
+         * @param none
+         * @return none
+         */
+        function processValue() {
+            lastElement = String(document.getElementById('dollarID').value).slice(-1);
+            
+            if(isValid(lastElement, acceptableChars) == true) {
+                output += lastElement;
+                format();
+                refreshOutput();
+            }
+            else {
+                output = String(document.getElementById('dollarID').value).slice(0,-1);
+                stripCommasAndPeriod();
+                firstCommaPosition = 7;
+                nextCommaPosition = 11;
+                reformat();
+                refreshOutput();
+            }
+        }
         
         /**
          * Dynamically formats the input to a text field
@@ -24,17 +49,7 @@ Copyright 2015 Todd Brochu
          * @return none
          */
         function format() {
-            //use most recent keystroke only if a valid number
-            var lastElement = String(document.getElementById('dollarID').value).slice(-1);
-            if(isValid(lastElement, acceptableChars) == true) {
-                output += lastElement;
-            }
-            
-            else {
-                cleanField();
-            }
-            
-            //insert decimal point
+           //insert decimal point
             if(output.length == 2) {
                 output = "." + output; 
                 refreshOutput(); 
@@ -63,7 +78,7 @@ Copyright 2015 Todd Brochu
                 insertComma();
                 nextCommaPosition += 4;
                 refreshOutput();
-            }   
+            }    
         }
         
         /**
@@ -136,26 +151,57 @@ Copyright 2015 Todd Brochu
         }
         
         /**
-         * Erases the input field
-         * @param none 
-         * @return none
-         */
-        function cleanField() {
-            output = "";
-            firstCommaPosition = 7;
-            nextCommaPosition = 11;
-            refreshOutput();
-        }
-        
-        /**
          * Disallows backspace input
-         * @param {windows.event} ev 
+         * @param {windows.event} event 
          * @return none
          */
         function checkBackspace(event) {
             if (event.which == 8 || event.keyCode == 8) {
-                cleanField();
+                event.preventDefault();
             }
+        }
+        
+        /**
+         * Called when an invalid keystroke is entered;
+         * Strips out the commas and period
+         * @param none
+         * @return none
+         */
+        function stripCommasAndPeriod() {
+            output = output.replace(/,/g, "");
+            output = output.replace(".", "");
+        }
+        
+        /**
+         * Called when an invalid keystroke is entered;
+         * Resets the commas and decimal their correct locations
+         * @param none
+         * @return none
+         */
+        function reformat() {
+           //insert decimal point
+            if(output.length >= 2) {
+                var first = output.substr(0, output.length - 2);
+                var last = output.substr(output.length - 2, output.length);
+                output = first + "." + last; 
+            
+                //insert first comma
+                if(output.length >= firstCommaPosition) {
+                    var first = output.substr(0, output.length - (firstCommaPosition-1));
+                    var last = output.substr(output.length - (firstCommaPosition-1), output.length);
+                    output = first + "," + last;
+                }
+                
+                //insert subsequent commas
+                if(output.length >= nextCommaPosition) {
+                    while (first.length > 3) {
+                        var first = output.substr(0, output.length - (nextCommaPosition-1));
+                        var last = output.substr(output.length - (nextCommaPosition-1), output.length);
+                        output = first + "," + last;
+                        nextCommaPosition += 4;
+                    }
+                }
+            }    
         }
     </script>
   </head>
@@ -164,9 +210,10 @@ Copyright 2015 Todd Brochu
         <strong>Enter a dollar amount:</strong><br>
         <form action="" title="Enter a dollar amount, numbers only" >
             <strong>$</strong>
-            <input type="text" id="dollarID" value="" autofocus autocomplete="off"
-                   oninput="format()" onpaste="return false;" onkeydown="checkBackspace(event)"  
-                   style="height:40px; font-size: 36px; background-color: #EBFFFF;">
+            <input type="text" id="dollarID" value="" pattern="[0-9]*"
+                   autofocus  autocomplete="off"
+                   oninput="processValue()" onpaste="return false;" onkeydown="checkBackspace(event)"  
+                   style="height:40px; width:800px; font-size:36px; background-color:#EBFFFF;">
             
         </form>
     </div>
